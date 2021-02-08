@@ -20,7 +20,7 @@ export const graphqlSchema = buildSchema(`
     text: String!
     views: Int!
   }
-  
+
   type RootQuery {
     hello: TestData
   }
@@ -39,7 +39,8 @@ export const graphqlSchema = buildSchema(`
     email: String!
     name: String!
     password: String!
-    status: String!
+    # this is one to many relation between
+    # user and post where one user cna be the creator of multiple posts
     post: [Post!]!
   }
 
@@ -50,7 +51,7 @@ export const graphqlSchema = buildSchema(`
   }
 
   type RootMutation {
-    signup(userInput: UserInputData): User!
+    createUser(userInput: UserInputData): User!
   }
 
   schema {
