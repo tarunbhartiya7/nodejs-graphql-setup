@@ -6,6 +6,26 @@ import validator from "validator";
 
 import User from "../models/users.js";
 
+const books = [
+  {
+    title: "The Awakening",
+    author: "Kate Chopin",
+  },
+  {
+    title: "City of Glass",
+    author: "Paul Auster",
+  },
+];
+
+export const apolloResolvers = {
+  Query: {
+    books: () => {
+      console.log(books);
+      return books;
+    },
+  },
+};
+
 export const hello = () => ({
   text: "Hello World!",
   views: 123,
@@ -20,10 +40,7 @@ export const createUser = async ({ userInput }) => {
   if (!validator.isEmail(email)) {
     errors.push({ message: "Email is invalid!" });
   }
-  if (
-    validator.isEmpty(password) ||
-    !validator.isLength(password, { min: 5 })
-  ) {
+  if (validator.isEmpty(password) || !validator.isLength(password, { min: 5 })) {
     errors.push({ message: "Password too short!" });
   }
   if (errors.length > 0) {

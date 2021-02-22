@@ -1,12 +1,15 @@
 import express from "express";
-import { graphqlHTTP } from "express-graphql";
+// import { graphqlHTTP } from "express-graphql";
 import mongoose from "mongoose";
+import { ApolloServer } from "apollo-server-express";
 
-import { hello, createUser } from "./graphql/resolvers.js";
-import { graphqlSchema } from "./graphql/schema.js";
+import { apolloResolvers } from "./graphql/resolvers.js";
+import { typeDefs } from "./graphql/schema.js";
 
 const app = express();
 const port = 3000;
+const server = new ApolloServer({ typeDefs, resolvers: apolloResolvers });
+server.applyMiddleware({ app });
 
 // enable CORS
 app.use((req, res, next) => {
@@ -19,27 +22,27 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(
-  "/graphql",
-  graphqlHTTP({
-    schema: graphqlSchema,
-    rootValue: { hello, createUser },
-    graphiql: true,
-    customFormatErrorFn(err) {
-      if (!err.originalError) {
-        return err;
-      }
-      const { data } = err.originalError;
-      const message = err.message || "An error occurred.";
-      const code = err.originalError.code || 500;
-      return {
-        data,
-        message,
-        status: code,
-      };
-    },
-  })
-);
+// app.use(
+//   "/graphql",
+//   graphqlHTTP({
+//     schema: graphqlSchema,
+//     rootValue: { hello, createUser },
+//     graphiql: true,
+//     customFormatErrorFn(err) {
+//       if (!err.originalError) {
+//         return err;
+//       }
+//       const { data } = err.originalError;
+//       const message = err.message || "An error occurred.";
+//       const code = err.originalError.code || 500;
+//       return {
+//         data,
+//         message,
+//         status: code,
+//       };
+//     },
+//   })
+// );
 
 app.get("/", (req, res) => {
   res.send("Nodejs Express app for GraphQL APIs");
