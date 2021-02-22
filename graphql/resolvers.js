@@ -1,7 +1,8 @@
 /* This file will  contain the business logic or
-handlers for the incoming requests */
+handlers for the incoming requests, similar to controllers in REST APIs */
 
 import bcrypt from "bcrypt";
+import validator from "validator";
 
 import User from "../models/users.js";
 
@@ -12,6 +13,25 @@ export const hello = () => ({
 
 export const createUser = async ({ userInput }) => {
   const { email, name, password } = userInput;
+  const errors = [];
+  if (validator.isEmpty(name)) {
+    errors.push({ message: "Name is required!" });
+  }
+  if (!validator.isEmail(email)) {
+    errors.push({ message: "Email is invalid!" });
+  }
+  if (
+    validator.isEmpty(password) ||
+    !validator.isLength(password, { min: 5 })
+  ) {
+    errors.push({ message: "Password too short!" });
+  }
+  if (errors.length > 0) {
+    const error = new Error("Invalid input");
+    error.data = errors;
+    error.code = 422;
+    throw error;
+  }
   // check if user already existing in db
   const existingUser = await User.findOne({ email });
   if (existingUser) {
