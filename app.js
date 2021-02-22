@@ -1,5 +1,4 @@
 import express from "express";
-// import { graphqlHTTP } from "express-graphql";
 import mongoose from "mongoose";
 import { ApolloServer } from "apollo-server-express";
 
@@ -8,7 +7,23 @@ import { typeDefs } from "./graphql/schema.js";
 
 const app = express();
 const port = 3000;
-const server = new ApolloServer({ typeDefs, resolvers: apolloResolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers: apolloResolvers,
+  formatError: (err) => {
+    if (!err.originalError) {
+      return err;
+    }
+    const { data } = err.originalError;
+    const message = err.message || "An error occurred.";
+    const code = err.originalError.code || 500;
+    return {
+      message,
+      status: code,
+      data,
+    };
+  },
+});
 server.applyMiddleware({ app });
 
 // enable CORS
@@ -22,40 +37,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.use(
-//   "/graphql",
-//   graphqlHTTP({
-//     schema: graphqlSchema,
-//     rootValue: { hello, createUser },
-//     graphiql: true,
-//     customFormatErrorFn(err) {
-//       if (!err.originalError) {
-//         return err;
-//       }
-//       const { data } = err.originalError;
-//       const message = err.message || "An error occurred.";
-//       const code = err.originalError.code || 500;
-//       return {
-//         data,
-//         message,
-//         status: code,
-//       };
-//     },
-//   })
-// );
-
 app.get("/", (req, res) => {
   res.send("Nodejs Express app for GraphQL APIs");
 });
 
-app.use((error, req, res, next) => {
-  const { message, data } = error;
-  // 500 is server side error
-  res.status(error.statusCode || 500).json({
-    message,
-    data,
-  });
-});
+// app.use((error, req, res, next) => {
+//   const { message, data } = error;
+//   // 500 is server side error
+//   res.status(error.statusCode || 500).json({
+//     message,
+//     data,
+//   });
+// });
 
 mongoose
   .connect(

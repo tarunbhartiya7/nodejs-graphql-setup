@@ -17,30 +17,19 @@ const books = [
   },
 ];
 
-export const apolloResolvers = {
-  Query: {
-    books: () => {
-      console.log(books);
-      return books;
-    },
-  },
-};
-
-export const hello = () => ({
-  text: "Hello World!",
-  views: 123,
-});
-
-export const createUser = async ({ userInput }) => {
+const createUser = async (_, { userInput }) => {
   const { email, name, password } = userInput;
   const errors = [];
   if (validator.isEmpty(name)) {
     errors.push({ message: "Name is required!" });
   }
+  if (validator.isEmpty(email)) {
+    errors.push({ message: "Email is required!" });
+  }
   if (!validator.isEmail(email)) {
     errors.push({ message: "Email is invalid!" });
   }
-  if (validator.isEmpty(password) || !validator.isLength(password, { min: 5 })) {
+  if (!validator.isLength(password, { min: 5 })) {
     errors.push({ message: "Password too short!" });
   }
   if (errors.length > 0) {
@@ -49,7 +38,6 @@ export const createUser = async ({ userInput }) => {
     error.code = 422;
     throw error;
   }
-  // check if user already existing in db
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     const error = new Error("Email exists already!");
@@ -65,4 +53,16 @@ export const createUser = async ({ userInput }) => {
   return createdUser;
 };
 
-// export const hello = () => "Hello!";
+export const apolloResolvers = {
+  Query: {
+    books: () => books,
+  },
+  Mutation: {
+    createUser: createUser,
+  },
+};
+
+export const hello = () => ({
+  text: "Hello World!",
+  views: 123,
+});
