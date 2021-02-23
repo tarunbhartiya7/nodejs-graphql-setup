@@ -29,6 +29,11 @@ export const typeDefs = gql`
     password: String!
   }
 
+  input PostInputData {
+    title: String!
+    content: String!
+  }
+
   type AuthData {
     token: String!
     userId: String!
@@ -41,5 +46,6 @@ export const typeDefs = gql`
 
   type Mutation {
     createUser(userInput: UserInputData): User!
+    createPost(postInput: PostInputData): Post!
   }
 `;

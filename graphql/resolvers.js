@@ -6,6 +6,7 @@ import validator from "validator";
 import jwt from "jsonwebtoken";
 
 import User from "../models/users.js";
+import Post from "../models/post.js";
 
 const books = [
   {
@@ -78,6 +79,34 @@ const login = async (_, { email, password }) => {
   return { token, userId: user._id.toString() };
 };
 
+const createPost = async (_, { postInput }) => {
+  const { title, content } = postInput;
+  const errors = [];
+  if (!validator.isLength(title, { min: 5 })) {
+    errors.push({ message: "Title too short!" });
+  }
+  if (!validator.isLength(content, { min: 5 })) {
+    errors.push({ message: "Content too short!" });
+  }
+  if (errors.length > 0) {
+    const error = new Error("Invalid input");
+    error.data = errors;
+    error.code = 422;
+    throw error;
+  }
+  const post = new Post({
+    title,
+    content,
+  });
+  const createPost = await post.save();
+  return {
+    ...createPost._doc,
+    _id: createPost._id.toString(),
+    createdAt: createPost.createdAt.toISOString(),
+    updatedAt: createPost.updatedAt.toISOString(),
+  };
+};
+
 export const apolloResolvers = {
   Query: {
     books: () => books,
@@ -85,6 +114,7 @@ export const apolloResolvers = {
   },
   Mutation: {
     createUser: createUser,
+    createPost: createPost,
   },
 };
 
