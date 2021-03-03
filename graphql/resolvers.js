@@ -169,6 +169,35 @@ const updatePost = async (_, { id, postInput }, context) => {
   };
 };
 
+const deletePost = async (_, { id }, context) => {
+  if (!context.userId) {
+    const error = new Error("Not authenticated!");
+    error.code = 401;
+    throw error;
+  }
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const error = new Error("Not a valid id!");
+    error.code = 404;
+    throw error;
+  }
+  const post = await Post.findById(id);
+  if (!post) {
+    const error = new Error("No post found!");
+    error.code = 404;
+    throw error;
+  }
+  if (post.creator.toString() !== context.userId) {
+    const error = new Error("Not authorized!");
+    error.code = 404;
+    throw error;
+  }
+  await Post.findByIdAndRemove(id);
+  const user = await User.findById(context.userId);
+  user.posts.pull(id);
+  await user.save();
+  return true;
+};
+
 const posts = async (_, { page, pageSize }, context) => {
   if (!context.userId) {
     const error = new Error("Not authenticated!");
@@ -227,8 +256,9 @@ export const apolloResolvers = {
     post: post,
   },
   Mutation: {
-    createUser: createUser,
-    createPost: createPost,
+    createUser,
+    createPost,
     updatePost,
+    deletePost,
   },
 };

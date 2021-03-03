@@ -55,5 +55,6 @@ export const typeDefs = gql`
     createUser(userInput: UserInputData): User!
     createPost(postInput: PostInputData): Post!
     updatePost(id: ID!, postInput: PostInputData): Post!
+    deletePost(id: ID!): Boolean!
   }
 `;
