@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 
 import User from "../models/users.js";
 import Post from "../models/post.js";
+import mongoose from "mongoose";
 
 const books = [
   {
@@ -121,6 +122,53 @@ const createPost = async (_, { postInput }, context) => {
   };
 };
 
+const updatePost = async (_, { id, postInput }, context) => {
+  if (!context.userId) {
+    const error = new Error("Not authenticated!");
+    error.code = 401;
+    throw error;
+  }
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const error = new Error("Not a valid id!");
+    error.code = 404;
+    throw error;
+  }
+  const post = await Post.findById(id).populate("creator");
+  if (!post) {
+    const error = new Error("No post found!");
+    error.code = 404;
+    throw error;
+  }
+  if (post.creator._id.toString() !== context.userId) {
+    const error = new Error("Not authorized!");
+    error.code = 404;
+    throw error;
+  }
+  const { title, content } = postInput;
+  const errors = [];
+  if (!validator.isLength(title, { min: 5 })) {
+    errors.push({ message: "Title too short!" });
+  }
+  if (!validator.isLength(content, { min: 5 })) {
+    errors.push({ message: "Content too short!" });
+  }
+  if (errors.length > 0) {
+    const error = new Error("Invalid input");
+    error.data = errors;
+    error.code = 422;
+    throw error;
+  }
+  post.title = title;
+  post.content = content;
+  const updatedPost = await post.save();
+  return {
+    ...updatedPost._doc,
+    _id: updatedPost._id.toString(),
+    createdAt: updatedPost.createdAt.toISOString(),
+    updatedAt: updatedPost.updatedAt.toISOString(),
+  };
+};
+
 const posts = async (_, { page, pageSize }, context) => {
   if (!context.userId) {
     const error = new Error("Not authenticated!");
@@ -147,14 +195,40 @@ const posts = async (_, { page, pageSize }, context) => {
   };
 };
 
+const post = async (_, { id }, context) => {
+  if (!context.userId) {
+    const error = new Error("Not authenticated!");
+    error.code = 401;
+    throw error;
+  }
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const error = new Error("Not a valid id!");
+    error.code = 404;
+    throw error;
+  }
+  const post = await Post.findById(id).populate("creator");
+  if (!post) {
+    const error = new Error("No post found!");
+    error.code = 404;
+    throw error;
+  }
+  return {
+    ...post._doc,
+    createdAt: post.createdAt.toISOString(),
+    updatedAt: post.updatedAt.toISOString(),
+  };
+};
+
 export const apolloResolvers = {
   Query: {
     books: () => books,
     login: login,
     posts: posts,
+    post: post,
   },
   Mutation: {
     createUser: createUser,
     createPost: createPost,
+    updatePost,
   },
 };

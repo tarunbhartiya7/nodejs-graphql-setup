@@ -48,10 +48,12 @@ export const typeDefs = gql`
     books: [Book]
     login(email: String!, password: String!): AuthData!
     posts(page: Int, pageSize: Int): PostData!
+    post(id: ID!): Post!
   }
 
   type Mutation {
     createUser(userInput: UserInputData): User!
     createPost(postInput: PostInputData): Post!
+    updatePost(id: ID!, postInput: PostInputData): Post!
   }
 `;
