@@ -79,7 +79,12 @@ const login = async (_, { email, password }) => {
   return { token, userId: user._id.toString() };
 };
 
-const createPost = async (_, { postInput }) => {
+const createPost = async (_, { postInput }, context) => {
+  if (!context.userId) {
+    const error = new Error("Not authenticated!");
+    error.code = 401;
+    throw error;
+  }
   const { title, content } = postInput;
   const errors = [];
   if (!validator.isLength(title, { min: 5 })) {
@@ -94,11 +99,20 @@ const createPost = async (_, { postInput }) => {
     error.code = 422;
     throw error;
   }
+  const user = await User.findById(context.userId);
+  if (!user) {
+    const error = new Error("Invalid user");
+    error.code = 401;
+    throw error;
+  }
   const post = new Post({
     title,
     content,
+    creator: user,
   });
   const createPost = await post.save();
+  user.posts.push(post);
+  await user.save();
   return {
     ...createPost._doc,
     _id: createPost._id.toString(),
@@ -107,18 +121,40 @@ const createPost = async (_, { postInput }) => {
   };
 };
 
+const posts = async (_, { page, pageSize }, context) => {
+  if (!context.userId) {
+    const error = new Error("Not authenticated!");
+    error.code = 401;
+    throw error;
+  }
+  if (!page) page = 1;
+  if (!pageSize) pageSize = 2;
+  const totalPosts = await Post.find().countDocuments();
+  const posts = await Post.find()
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .populate("creator");
+  return {
+    posts: posts.map((p) => {
+      return {
+        ...p._doc,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      };
+    }),
+    totalPosts,
+  };
+};
+
 export const apolloResolvers = {
   Query: {
     books: () => books,
     login: login,
+    posts: posts,
   },
   Mutation: {
     createUser: createUser,
     createPost: createPost,
   },
 };
-
-export const hello = () => ({
-  text: "Hello World!",
-  views: 123,
-});

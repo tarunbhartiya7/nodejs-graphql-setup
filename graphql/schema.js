@@ -15,6 +15,11 @@ export const typeDefs = gql`
     updatedAt: String!
   }
 
+  type PostData {
+    posts: [Post]
+    totalPosts: Int!
+  }
+
   type User {
     _id: ID!
     email: String!
@@ -42,6 +47,7 @@ export const typeDefs = gql`
   type Query {
     books: [Book]
     login(email: String!, password: String!): AuthData!
+    posts(page: Int, pageSize: Int): PostData!
   }
 
   type Mutation {

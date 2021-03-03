@@ -1,15 +1,25 @@
 import express from "express";
 import mongoose from "mongoose";
 import { ApolloServer } from "apollo-server-express";
+import jwt from "jsonwebtoken";
 
 import { apolloResolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/schema.js";
-
 const app = express();
 const port = 3000;
 const server = new ApolloServer({
   typeDefs,
   resolvers: apolloResolvers,
+  context: ({ req }) => {
+    /* This middleware will run every request that reaches our end point but it will not deny any request if
+there is no token but just set some parameters which will help us identify whether user is authenticated or not
+*/
+    const token = req.headers.authorization;
+    if (token) {
+      const decodedToken = jwt.verify(token, "supersecretkey");
+      return { userId: decodedToken.userId };
+    }
+  },
   formatError: (err) => {
     if (!err.originalError) {
       return err;
