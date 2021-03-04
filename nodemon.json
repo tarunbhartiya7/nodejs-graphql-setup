@@ -1,0 +1,9 @@
+{
+  "env": {
+    "MONGO_USER": "sam",
+    "MONGO_PASSWORD": "CLguEEdLPjyNTBZg",
+    "MONGO_DATABASE": "graphql-posts",
+    "SECRET_KEY": "supersecretkey",
+    "NODE_ENV": "development"
+  }
+}
